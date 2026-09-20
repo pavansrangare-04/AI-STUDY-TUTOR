@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - Virtual AI Tutor{% endblock %}
+
+{% block content %}
+<div class="error-page-container">
+    <div class="card error-card">
+        <div class="error-code text-accent">404</div>
+        <h1 class="error-title">Page Not Found</h1>
+        <p class="error-desc">The requested curriculum section or study document does not exist.</p>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+            Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Profile & Settings - Virtual AI Tutor{% endblock %}
+
+{% block content %}
+<div class="profile-page-container">
+    <div class="page-header-banner">
+        <div>
+            <h1 class="page-title">Profile & Learning Preferences</h1>
+            <p class="page-subtitle">Customize your academic level, explanation style, and account security.</p>
+        </div>
+    </div>
+
+    <div class="profile-grid">
+        <!-- Profile Overview Card -->
+        <div class="card profile-card">
+            <div class="profile-avatar-large">{{ user.username[0].upper() }}</div>
+            <h2 class="profile-username">{{ user.username }}</h2>
+            <div class="profile-email">{{ user.email }}</div>
+            <div class="profile-role-pill">
+                <span class="badge {% if user.is_admin %}badge-admin{% else %}badge-accent{% endif %}">
+                    {{ user.role.capitalize() }}
+                </span>
+            </div>
+            <div class="profile-member-since">
+                Member since {{ user.created_at.strftime('%B %Y') }}
+            </div>
+            <hr class="card-divider" />
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-block text-danger">
+                Sign Out
+            </a>
+        </div>
+
+        <!-- Preferences Form Card -->
+        <div class="card profile-form-card">
+            <div class="card-header">
+                <h3 class="card-title">Tutor Personalization</h3>
+                <span class="card-subtitle">The AI tutor adapts answers according to these settings</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.profile') }}">
+                    <div class="form-group">
+                        <label class="form-label">Preferred Academic Level</label>
+                        <select name="learning_level" class="form-select">
+                            <option value="beginner" {% if user.learning_level == 'beginner' %}selected{% endif %}>Beginner (Intuitive analogies, plain English, simple examples)</option>
+                            <option value="intermediate" {% if user.learning_level == 'intermediate' %}selected{% endif %}>Intermediate (Balanced technical depth, code snippets, practical clarity)</option>
+                            <option value="advanced" {% if user.learning_level == 'advanced' %}selected{% endif %}>Advanced (Rigorous mathematical foundations, algorithmic analysis, edge cases)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Explanation Style</label>
+                        <select name="explanation_style" class="form-select">
+                            <option value="concise" {% if user.explanation_style == 'concise' %}selected{% endif %}>Concise (Short, bulleted key takeaways)</option>
+                            <option value="detailed" {% if user.explanation_style == 'detailed' %}selected{% endif %}>Detailed (Comprehensive explanation with definitions & mechanics)</option>
+                            <option value="step_by_step" {% if user.explanation_style == 'step_by_step' %}selected{% endif %}>Step-by-Step (Numbered breakdown with clear logical stages)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Default Theme</label>
+                        <select name="theme_preference" class="form-select">
+                            <option value="dark" {% if user.theme_preference == 'dark' %}selected{% endif %}>Dark Mode (VisionOS Dark)</option>
+                            <option value="light" {% if user.theme_preference == 'light' %}selected{% endif %}>Light Mode (Clean Academic)</option>
+                        </select>
+                    </div>
+
+                    <hr class="card-divider" />
+                    <div class="form-group">
+                        <label class="form-label">Change Password <span class="text-muted">(leave blank to keep current)</span></label>
+                        <input type="password" name="new_password" class="form-input" placeholder="Enter new password (min 6 chars)" minlength="6" />
+                    </div>
+
+                    <div class="form-actions-right">
+                        <button type="submit" class="btn btn-primary">
+                            Save Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}{{ subject.name }} - Study Library{% endblock %}
+
+{% block content %}
+<div class="subject-detail-page">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+        <a href="{{ url_for('study.subjects_list') }}">&larr; Back to All Subjects</a>
+    </div>
+
+    <!-- Header Section -->
+    <div class="subject-hero-card">
+        <div class="subject-hero-content">
+            <span class="badge badge-code">{{ subject.code }}</span>
+            <h1 class="subject-hero-title">{{ subject.name }}</h1>
+            <p class="subject-hero-desc">{{ subject.description }}</p>
+        </div>
+        <div class="subject-hero-actions">
+            <a href="{{ url_for('chat.chat_view') }}?subject_id={{ subject.id }}" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Ask AI About {{ subject.code }}</span>
+            </a>
+            {% if quizzes %}
+            <a href="{{ url_for('quiz.take_quiz', quiz_id=quizzes[0].id) }}" class="btn btn-outline">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="12 8 8 12 12 16 12 8"></polygon>
+                </svg>
+                <span>Take Practice Quiz</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Layout Grid -->
+    <div class="subject-layout-grid">
+        <!-- Main: Study Guides and Notes -->
+        <div class="subject-materials-section">
+            <div class="section-title-row">
+                <h2>Verified Study Materials & Notes</h2>
+                <span class="badge badge-pill">{{ materials|length }} Notes Available</span>
+            </div>
+
+            {% if materials %}
+                {% for mat in materials %}
+                <article class="material-card">
+                    <header class="material-card-header">
+                        <div>
+                            <span class="material-topic-badge">{{ mat.topic.name if mat.topic else 'General Curriculum' }}</span>
+                            <h3 class="material-title">{{ mat.title }}</h3>
+                        </div>
+                        <span class="material-date">{{ mat.created_at.strftime('%b %d, %Y') }}</span>
+                    </header>
+
+                    <div class="material-body markdown-body">
+                        {{ mat.content | markdown | safe }}
+                    </div>
+
+                    <footer class="material-footer">
+                        <span class="rag-status-tag">&check; Indexed for AI Tutor RAG retrieval</span>
+                        <a href="{{ url_for('chat.chat_view') }}?subject_id={{ subject.id }}" class="btn btn-sm btn-outline">
+                            Ask Question on this Guide &rarr;
+                        </a>
+                    </footer>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state-card">
+                    <p>No study materials uploaded for this subject yet.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar: Topics & Quizzes -->
+        <aside class="subject-side-modules">
+            <!-- Topics -->
+            <div class="card side-card">
+                <h3 class="side-card-title">Subject Modules</h3>
+                <ul class="side-topics-list">
+                    {% for top in topics %}
+                    <li class="side-topic-item">
+                        <div class="side-topic-name">{{ top.name }}</div>
+                        <div class="side-topic-desc">{{ top.description }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Subject Quizzes -->
+            <div class="card side-card">
+                <h3 class="side-card-title">Subject Quizzes</h3>
+                {% if quizzes %}
+                <div class="side-quizzes-list">
+                    {% for qz in quizzes %}
+                    <div class="side-quiz-item">
+                        <div class="side-quiz-info">
+                            <span class="badge badge-sm badge-accent">{{ qz.difficulty|capitalize }}</span>
+                            <h4 class="side-quiz-title">{{ qz.title }}</h4>
+                            <span class="side-quiz-meta">{{ qz.questions.count() }} Questions &bull; {{ qz.time_limit_mins }} mins</span>
+                        </div>
+                        <a href="{{ url_for('quiz.take_quiz', quiz_id=qz.id) }}" class="btn btn-sm btn-primary">
+                            Start
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No quizzes available for this subject.</p>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Center - Practice & Diagnostics{% endblock %}
+
+{% block content %}
+<div class="quiz-center-page">
+    <div class="page-header-banner">
+        <div>
+            <h1 class="page-title">Diagnostic Quiz Center</h1>
+            <p class="page-subtitle">Test your subject mastery with curriculum-aligned practice quizzes and instant feedback.</p>
+        </div>
+    </div>
+
+    <!-- Quizzes Grid -->
+    <div class="quizzes-grid">
+        {% for quiz in quizzes %}
+        <div class="quiz-card">
+            <div class="quiz-card-header">
+                <span class="badge badge-code">{{ quiz.subject.code }}</span>
+                <span class="badge badge-diff-{{ quiz.difficulty }}">{{ quiz.difficulty|capitalize }}</span>
+            </div>
+
+            <h3 class="quiz-title">{{ quiz.title }}</h3>
+            <p class="quiz-desc">{{ quiz.description }}</p>
+
+            <div class="quiz-meta-row">
+                <span class="quiz-meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 14 14"></polyline>
+                    </svg>
+                    {{ quiz.time_limit_mins }} mins
+                </span>
+                <span class="quiz-meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    {{ quiz.questions.count() }} MCQs
+                </span>
+            </div>
+
+            <!-- Past performance if attempted -->
+            {% if quiz.id in latest_attempts %}
+            {% set att = latest_attempts[quiz.id] %}
+            <div class="past-attempt-banner">
+                <span>Latest Score: <strong>{{ att.score }}/{{ att.total_questions }}</strong> ({{ att.accuracy_pct }}%)</span>
+                <a href="{{ url_for('quiz.quiz_result', attempt_id=att.id) }}" class="link-action">Review</a>
+            </div>
+            {% endif %}
+
+            <div class="quiz-card-footer">
+                <a href="{{ url_for('quiz.take_quiz', quiz_id=quiz.id) }}" class="btn btn-primary btn-block">
+                    <span>{% if quiz.id in latest_attempts %}Retake Quiz{% else %}Start Quiz{% endif %}</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Past Attempts History Table -->
+    {% if history %}
+    <div class="card quiz-history-card">
+        <div class="card-header">
+            <h2 class="card-title">Recent Quiz Attempts</h2>
+            <span class="card-subtitle">Detailed record of your past diagnostic submissions</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Quiz Title</th>
+                            <th>Subject</th>
+                            <th>Score</th>
+                            <th>Accuracy</th>
+                            <th>Completed At</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for att in history %}
+                        <tr>
+                            <td><strong>{{ att.quiz.title }}</strong></td>
+                            <td><span class="badge badge-code">{{ att.quiz.subject.code }}</span></td>
+                            <td>{{ att.score }} / {{ att.total_questions }}</td>
+                            <td>
+                                <span class="badge {% if att.accuracy_pct >= 80 %}badge-success{% elif att.accuracy_pct >= 60 %}badge-warning{% else %}badge-danger{% endif %}">
+                                    {{ att.accuracy_pct }}%
+                                </span>
+                            </td>
+                            <td>{{ att.completed_at.strftime('%b %d, %Y - %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('quiz.quiz_result', attempt_id=att.id) }}" class="btn btn-sm btn-outline">
+                                    Review
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

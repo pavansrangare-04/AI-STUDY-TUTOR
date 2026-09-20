@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}My Learning Progress{% endblock %}
+
+{% block content %}
+<div class="progress-page">
+    <div class="page-header-banner">
+        <div>
+            <h1 class="page-title">Personalized Learning Analytics</h1>
+            <p class="page-subtitle">Track your questions asked, subject mastery, diagnostic test accuracy, and revision needs.</p>
+        </div>
+        <div class="header-level-badge">
+            <span>Level: <strong>{{ user.learning_level.capitalize() }}</strong></span>
+        </div>
+    </div>
+
+    <!-- Analytics Stat Cards -->
+    <div class="stats-grid-4">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper icon-questions">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+            </div>
+            <div class="stat-info-col">
+                <div class="stat-huge-number">{{ analytics.total_questions_asked }}</div>
+                <div class="stat-desc">Questions Asked</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper icon-convs">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+            </div>
+            <div class="stat-info-col">
+                <div class="stat-huge-number">{{ analytics.total_conversations }}</div>
+                <div class="stat-desc">Study Sessions</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper icon-quizzes">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="12 8 8 12 12 16 12 8"></polygon>
+                </svg>
+            </div>
+            <div class="stat-info-col">
+                <div class="stat-huge-number">{{ analytics.total_quizzes_attempted }}</div>
+                <div class="stat-desc">Quizzes Completed</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper icon-accuracy">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+            </div>
+            <div class="stat-info-col">
+                <div class="stat-huge-number">{{ analytics.average_accuracy }}%</div>
+                <div class="stat-desc">Average Accuracy</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Analytics Two Column Layout -->
+    <div class="dashboard-grid">
+        <!-- Left Column: Subject Mastery Progress Bars -->
+        <div class="dashboard-col">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">Subject Mastery & Accuracy</h2>
+                    <span class="card-subtitle">Real performance computed from submitted quizzes</span>
+                </div>
+                <div class="card-body">
+                    {% if analytics.subject_breakdown %}
+                    <div class="subject-progress-list">
+                        {% for sub in analytics.subject_breakdown %}
+                        <div class="subject-progress-item">
+                            <div class="prog-item-header">
+                                <span class="prog-sub-name">{{ sub.name }} ({{ sub.code }})</span>
+                                <span class="prog-sub-pct">{{ sub.accuracy }}%</span>
+                            </div>
+                            <div class="prog-bar-track">
+                                <div class="prog-bar-fill {% if sub.accuracy >= 80 %}fill-high{% elif sub.accuracy >= 60 %}fill-mid{% else %}fill-low{% endif %}" style="width: {{ sub.accuracy }}%;"></div>
+                            </div>
+                            <div class="prog-sub-footer">
+                                <span>{{ sub.attempts }} attempt(s) recorded</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state-sm">
+                        <p>No subject performance data recorded yet. Take quizzes to generate your mastery breakdown!</p>
+                        <a href="{{ url_for('quiz.quiz_list') }}" class="btn btn-sm btn-primary">Take a Quiz</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Weak Topics for Revision -->
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">Weak Topics Flagged for Revision</h2>
+                    <span class="card-subtitle">Areas scoring below 65% accuracy</span>
+                </div>
+                <div class="card-body">
+                    {% if analytics.weak_topics %}
+                    <div class="weak-topics-list">
+                        {% for wt in analytics.weak_topics %}
+                        <div class="weak-topic-alert">
+                            <div class="wt-badge">&excl;</div>
+                            <div class="wt-content">
+                                <div class="wt-title">{{ wt.topic }} ({{ wt.subject }})</div>
+                                <div class="wt-reason">{{ wt.reason }}</div>
+                            </div>
+                            <a href="{{ url_for('chat.chat_view') }}" class="btn btn-sm btn-outline">Ask AI</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state-sm">
+                        <p>&check; No critical weak areas flagged! You either have high accuracy or haven't attempted quizzes yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Study Recommendations & History -->
+        <div class="dashboard-col">
+            <!-- Grounded Recommendations -->
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">Curriculum Recommendations</h2>
+                    <span class="card-subtitle">Algorithmic advice tailored to your learning data</span>
+                </div>
+                <div class="card-body">
+                    <div class="recommendations-list">
+                        {% for rec in analytics.recommendations %}
+                        <div class="rec-item">
+                            <div class="rec-header">
+                                <span class="badge badge-accent">{{ rec.badge }}</span>
+                                <span class="rec-subject">{{ rec.subject }}</span>
+                            </div>
+                            <h4 class="rec-title">{{ rec.title }}</h4>
+                            <p class="rec-reason">{{ rec.reason }}</p>
+                            <a href="{{ rec.action_url }}" class="btn btn-sm btn-outline">Go to Study Library &rarr;</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Quiz History -->
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">Diagnostic History</h2>
+                    <span class="card-subtitle">Last 6 quiz results</span>
+                </div>
+                <div class="card-body">
+                    {% if analytics.recent_attempts %}
+                    <div class="attempts-list-mini">
+                        {% for att in analytics.recent_attempts %}
+                        <div class="attempt-row-mini">
+                            <div>
+                                <div class="attempt-title">{{ att.quiz_title }}</div>
+                                <div class="attempt-date">{{ att.date }}</div>
+                            </div>
+                            <span class="badge {% if att.accuracy >= 80 %}badge-success{% elif att.accuracy >= 60 %}badge-warning{% else %}badge-danger{% endif %}">
+                                {{ att.score }} ({{ att.accuracy }}%)
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state-sm">
+                        <p>No quiz history available yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

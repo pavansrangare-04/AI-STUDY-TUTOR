@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Results - {{ attempt.quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="quiz-result-page">
+    <!-- Results Scoreboard Card -->
+    <div class="card result-hero-card">
+        <div class="result-badge-col">
+            <div class="score-circle {% if attempt.accuracy_pct >= 80 %}score-high{% elif attempt.accuracy_pct >= 60 %}score-mid{% else %}score-low{% endif %}">
+                <span class="score-number">{{ attempt.score }}</span>
+                <span class="score-total">/ {{ attempt.total_questions }}</span>
+            </div>
+        </div>
+        <div class="result-details-col">
+            <span class="badge badge-code">{{ attempt.quiz.subject.code }}</span>
+            <h1 class="result-title">{{ attempt.quiz.title }}</h1>
+            <div class="result-status-pill">
+                {% if attempt.accuracy_pct >= 80 %}
+                    <span class="badge badge-success">Mastery Demonstrated ({{ attempt.accuracy_pct }}%)</span>
+                {% elif attempt.accuracy_pct >= 60 %}
+                    <span class="badge badge-warning">Good Effort &mdash; Some Gaps ({{ attempt.accuracy_pct }}%)</span>
+                {% else %}
+                    <span class="badge badge-danger">Revision Recommended ({{ attempt.accuracy_pct }}%)</span>
+                {% endif %}
+            </div>
+            <p class="result-timestamp">Completed on {{ attempt.completed_at.strftime('%B %d, %Y at %H:%M') }}</p>
+
+            <div class="result-actions-row">
+                <a href="{{ url_for('quiz.take_quiz', quiz_id=attempt.quiz.id) }}" class="btn btn-outline">
+                    Retake Quiz
+                </a>
+                <a href="{{ url_for('quiz.quiz_list') }}" class="btn btn-outline">
+                    All Quizzes
+                </a>
+                <a href="{{ url_for('chat.chat_view') }}?subject_id={{ attempt.quiz.subject.id }}" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Ask AI Tutor to Clarify Weak Spots</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question by Question Review -->
+    <div class="card review-breakdown-card">
+        <div class="card-header">
+            <h2 class="card-title">Question by Question Breakdown</h2>
+            <span class="card-subtitle">Review explanations to solidify your understanding</span>
+        </div>
+        <div class="card-body">
+            <div class="breakdown-list">
+                {% for item in attempt.answers %}
+                <div class="review-item {% if item.is_correct %}review-correct{% else %}review-incorrect{% endif %}">
+                    <div class="review-item-header">
+                        <span class="review-q-num">Question {{ loop.index }}</span>
+                        {% if item.is_correct %}
+                        <span class="badge badge-success">&check; Correct (+1)</span>
+                        {% else %}
+                        <span class="badge badge-danger">&cross; Incorrect (0)</span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="review-q-text">{{ item.question_text }}</h3>
+
+                    <div class="review-choices-comparison">
+                        <div class="choice-box {% if item.is_correct %}choice-correct{% else %}choice-wrong{% endif %}">
+                            <span class="choice-tag">Your Answer:</span>
+                            <span class="choice-val">({{ item.selected_option }}) {{ item.selected_text }}</span>
+                        </div>
+                        {% if not item.is_correct %}
+                        <div class="choice-box choice-correct">
+                            <span class="choice-tag">Correct Answer:</span>
+                            <span class="choice-val">({{ item.correct_option }}) {{ item.correct_text }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="review-explanation-box">
+                        <div class="exp-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <span>Explanation & Academic Rationale:</span>
+                        </div>
+                        <p class="exp-text">{{ item.explanation }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

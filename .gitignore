@@ -1,0 +1,27 @@
+# Environment and Secret Keys (NEVER commit or push)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Database & Uploads
+*.sqlite3
+*.db
+instance/
+uploads/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

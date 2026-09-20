@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}AI Tutor Chat{% endblock %}
+
+{% block content %}
+<div class="chat-page-container">
+    <!-- Chat Conversations Sub-Sidebar -->
+    <aside class="chat-sidebar" id="chatSidebar">
+        <div class="chat-sidebar-header">
+            <button id="btnNewChat" class="btn btn-primary btn-block">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>New Conversation</span>
+            </button>
+
+            <!-- Search box -->
+            <div class="chat-search-wrapper">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="chatSearchInput" placeholder="Search conversations..." />
+            </div>
+        </div>
+
+        <!-- Conversation History List -->
+        <div class="chat-history-scroll" id="chatHistoryList">
+            {% if grouped_chats %}
+                {% for group_name, chats in grouped_chats.items() %}
+                <div class="chat-group-section">
+                    <div class="chat-group-title">{{ group_name }}</div>
+                    {% for chat in chats %}
+                    <div class="chat-item {% if current_conversation and current_conversation.id == chat.id %}active{% endif %}" data-chat-id="{{ chat.id }}">
+                        <a href="{{ url_for('chat.chat_view', conversation_id=chat.id) }}" class="chat-item-link">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            <span class="chat-item-title">{{ chat.title }}</span>
+                        </a>
+                        <div class="chat-item-actions">
+                            <button class="btn-chat-action btn-rename" title="Rename" onclick="renameChat({{ chat.id }}, '{{ chat.title|replace('\'', '\\\'') }}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button class="btn-chat-action btn-delete text-danger" title="Delete" onclick="deleteChat({{ chat.id }})">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-history">
+                    <p>No chat history yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- Main Chat Workspace -->
+    <main class="chat-workspace">
+        <!-- Chat Header -->
+        <header class="chat-workspace-header">
+            <div class="chat-header-left">
+                <button id="toggleChatSidebarBtn" class="icon-btn-ghost" title="Toggle chat history">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="current-chat-meta">
+                    <h2 id="currentChatTitle" class="current-chat-title">
+                        {{ current_conversation.title if current_conversation else 'New Conversation' }}
+                    </h2>
+                    <span class="chat-subject-badge" id="chatSubjectBadge">
+                        {{ current_conversation.subject.name if current_conversation and current_conversation.subject else 'All Subjects' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="chat-header-right">
+                <div class="ai-active-indicator" title="Active Model">
+                    <span class="status-dot {% if ai_status.is_cloud %}dot-cloud{% else %}dot-local{% endif %}"></span>
+                    <span class="ai-status-name">{{ ai_status.label }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Message Thread -->
+        <div class="chat-messages-container" id="chatMessagesContainer">
+            {% if messages %}
+                {% for msg in messages %}
+                <div class="message-bubble-wrapper message-{{ msg.sender }}" data-message-id="{{ msg.id }}">
+                    <div class="message-avatar">
+                        {% if msg.sender == 'user' %}
+                            {{ user.username[0].upper() }}
+                        {% else %}
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        {% endif %}
+                    </div>
+                    <div class="message-bubble">
+                        <div class="message-sender-name">
+                            {{ 'You' if msg.sender == 'user' else 'Virtual AI Tutor' }}
+                        </div>
+
+                        <!-- Source Grounding Badge -->
+                        {% if msg.sender == 'assistant' and msg.is_grounded and msg.sources %}
+                        <div class="grounded-sources-drawer">
+                            <div class="sources-pill" onclick="this.nextElementSibling.classList.toggle('open')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                </svg>
+                                <span>Grounded in Course Material ({{ msg.sources|length }} references) &darr;</span>
+                            </div>
+                            <div class="sources-dropdown">
+                                {% for src in msg.sources %}
+                                <div class="source-card-mini">
+                                    <div class="source-card-title">{{ src.title }} ({{ src.subject }})</div>
+                                    <div class="source-card-snippet">{{ src.snippet }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Message Content -->
+                        <div class="message-content markdown-body">
+                            {{ msg.content | markdown | safe }}
+                        </div>
+
+                        <!-- Assistant Action Bar -->
+                        {% if msg.sender == 'assistant' %}
+                        <div class="message-actions-bar">
+                            <button class="btn-action-copy" title="Copy answer" onclick="copyMessageText(this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                            <button class="btn-action-rating {% if msg.rating == 'helpful' %}active{% endif %}" title="Helpful" onclick="rateMessage({{ current_conversation.id }}, {{ msg.id }}, 'helpful', this)">
+                                &check; Helpful
+                            </button>
+                            <button class="btn-action-rating {% if msg.rating == 'unhelpful' %}active{% endif %}" title="Not Helpful" onclick="rateMessage({{ current_conversation.id }}, {{ msg.id }}, 'unhelpful', this)">
+                                &cross; Not Helpful
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Empty Chat Prompting Screen -->
+                <div class="chat-welcome-state" id="chatWelcomeState">
+                    <div class="welcome-tutor-avatar">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <h2>How can I help your learning today?</h2>
+                    <p>Ask anything about Operating Systems, DSA, DBMS, or AI/ML. Answers are verified against your academic curriculum notes.</p>
+                    
+                    <div class="suggested-prompts-grid">
+                        <button class="prompt-chip-card" onclick="insertPrompt('Explain the difference between Paging and Segmentation in Operating Systems.')">
+                            <span class="chip-subject">Operating Systems</span>
+                            <span class="chip-query">"Explain Paging vs Segmentation with address translation."</span>
+                        </button>
+                        <button class="prompt-chip-card" onclick="insertPrompt('What are the ACID properties of database transactions?')">
+                            <span class="chip-subject">DBMS</span>
+                            <span class="chip-query">"What are the ACID properties with real-world examples?"</span>
+                        </button>
+                        <button class="prompt-chip-card" onclick="insertPrompt('How does the A* search algorithm work, and why must the heuristic be admissible?')">
+                            <span class="chip-subject">AI & ML</span>
+                            <span class="chip-query">"How does A* search work and why is admissibility required?"</span>
+                        </button>
+                        <button class="prompt-chip-card" onclick="insertPrompt('Compare the time complexity of Quick Sort, Merge Sort, and Heap Sort.')">
+                            <span class="chip-subject">DSA</span>
+                            <span class="chip-query">"Compare time complexity and stability of sorting algorithms."</span>
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Chat Input Footer -->
+        <footer class="chat-workspace-footer">
+            <!-- Dynamic Follow-up Suggestions -->
+            <div class="followup-suggestions-bar" id="followupBar" style="display: none;">
+                <span class="followup-label">Suggested follow-ups:</span>
+                <div class="followup-chips-container" id="followupChips"></div>
+            </div>
+
+            <!-- Input Box Form -->
+            <form id="chatForm" class="chat-input-form" onsubmit="return false;">
+                <div class="chat-input-wrapper">
+                    <textarea 
+                        id="chatInput" 
+                        name="question" 
+                        placeholder="Ask your educational question... (Shift + Enter for new line, Enter to send)" 
+                        rows="1" 
+                        required
+                    ></textarea>
+                    
+                    <button type="button" id="btnSendChat" class="btn-send" aria-label="Send Message">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+            <div class="chat-footer-disclaimer">
+                Virtual AI Tutor answers are grounded in curriculum study notes. Always verify key exam details.
+            </div>
+        </footer>
+    </main>
+</div>
+
+<!-- Modal for Rename Conversation -->
+<div class="modal-overlay" id="renameModal" style="display: none;">
+    <div class="modal-card">
+        <h3 class="modal-title">Rename Conversation</h3>
+        <input type="text" id="renameInput" class="form-input" maxlength="180" />
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeRenameModal()">Cancel</button>
+            <button class="btn btn-primary" id="btnSaveRename">Save</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.CURRENT_CONVERSATION_ID = {{ current_conversation.id if current_conversation else 'null' }};
+</script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

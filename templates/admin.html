@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Resource Management - Virtual AI Tutor{% endblock %}
+
+{% block content %}
+<div class="admin-page-container">
+    <div class="page-header-banner">
+        <div>
+            <div class="header-badges-row">
+                <span class="badge badge-admin">Administrator Portal</span>
+                <span class="badge badge-accent">Curriculum Control</span>
+            </div>
+            <h1 class="page-title">Curriculum & Resource Management</h1>
+            <p class="page-subtitle">Upload notes, create subjects/topics, and manage RAG knowledge indexing used by the AI Tutor.</p>
+        </div>
+        <form method="POST" action="{{ url_for('admin.reindex_all') }}">
+            <button type="submit" class="btn btn-outline" title="Rebuild TF-IDF/BM25 chunks">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Re-index All RAG Chunks</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Admin KPI Stats -->
+    <div class="stats-grid-4">
+        <div class="stat-card">
+            <div class="stat-huge-number text-accent">{{ stats.subjects }}</div>
+            <div class="stat-desc">Subjects Active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-huge-number text-info">{{ stats.topics }}</div>
+            <div class="stat-desc">Topics / Modules</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-huge-number text-success">{{ stats.materials }}</div>
+            <div class="stat-desc">Study Guides</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-huge-number text-warning">{{ stats.chunks }}</div>
+            <div class="stat-desc">Indexed RAG Chunks</div>
+        </div>
+    </div>
+
+    <!-- Ingestion & Subject Forms Grid -->
+    <div class="admin-forms-grid">
+        <!-- Form 1: Ingest Study Notes (RAG) -->
+        <div class="card admin-form-card">
+            <div class="card-header">
+                <h3 class="card-title">Upload & Ingest Study Material</h3>
+                <span class="card-subtitle">Automatically indexed into searchable RAG chunks for the AI Tutor</span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.create_material') }}" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">Target Subject *</label>
+                        <select name="subject_id" class="form-select" required>
+                            <option value="">-- Select Subject --</option>
+                            {% for sub in subjects %}
+                            <option value="{{ sub.id }}">{{ sub.code }} - {{ sub.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Material Title *</label>
+                        <input type="text" name="title" class="form-input" placeholder="e.g. Memory Paging & Virtual Memory" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Upload Text / Markdown File <span class="text-muted">(Optional)</span></label>
+                        <input type="file" name="file" class="form-input" accept=".txt,.md,.markdown" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Or Paste Markdown Notes *</label>
+                        <textarea name="content" class="form-textarea" rows="7" placeholder="# Write or paste comprehensive educational notes in Markdown..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Ingest & Index Material for RAG
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Form 2: Add Subject & Topics -->
+        <div class="admin-side-forms">
+            <!-- Add Subject -->
+            <div class="card admin-form-card">
+                <div class="card-header">
+                    <h3 class="card-title">Add New Subject</h3>
+                    <span class="card-subtitle">Expand curriculum with new courses</span>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.create_subject') }}">
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label class="form-label">Code *</label>
+                                <input type="text" name="code" class="form-input" placeholder="e.g. CS402" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Subject Name *</label>
+                                <input type="text" name="name" class="form-input" placeholder="e.g. Computer Networks" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <input type="text" name="description" class="form-input" placeholder="Brief subject syllabus description" />
+                        </div>
+                        <button type="submit" class="btn btn-outline btn-block">
+                            Create Subject
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Topic -->
+            <div class="card admin-form-card">
+                <div class="card-header">
+                    <h3 class="card-title">Add Topic to Subject</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.create_topic') }}">
+                        <div class="form-group">
+                            <label class="form-label">Subject *</label>
+                            <select name="subject_id" class="form-select" required>
+                                {% for sub in subjects %}
+                                <option value="{{ sub.id }}">{{ sub.code }} - {{ sub.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Topic Name *</label>
+                            <input type="text" name="name" class="form-input" placeholder="e.g. TCP/IP Protocol Stack" required />
+                        </div>
+                        <button type="submit" class="btn btn-outline btn-block">
+                            Create Topic
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Study Materials Library Table -->
+    <div class="card admin-materials-card">
+        <div class="card-header">
+            <h3 class="card-title">Active Curriculum Materials</h3>
+            <span class="card-subtitle">{{ materials|length }} documents indexed</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Subject</th>
+                            <th>Topic</th>
+                            <th>Type</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mat in materials %}
+                        <tr>
+                            <td><strong>{{ mat.title }}</strong></td>
+                            <td><span class="badge badge-code">{{ mat.subject.code }}</span></td>
+                            <td>{{ mat.topic.name if mat.topic else 'General' }}</td>
+                            <td><span class="badge badge-pill">{{ mat.file_type }}</span></td>
+                            <td>{{ mat.created_at.strftime('%b %d, %Y') }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.delete_material', material_id=mat.id) }}" onsubmit="return confirm('Delete this study guide and its indexed chunks?');">
+                                    <button type="submit" class="btn btn-sm btn-outline text-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Taking: {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="quiz-runner-container">
+    <!-- Header -->
+    <div class="quiz-runner-header">
+        <div class="runner-header-info">
+            <span class="badge badge-code">{{ quiz.subject.code }}</span>
+            <h1 class="runner-quiz-title">{{ quiz.title }}</h1>
+        </div>
+        <div class="runner-stats">
+            <div class="runner-timer" id="quizTimer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 14 14"></polyline>
+                </svg>
+                <span id="timerText">10:00</span>
+            </div>
+            <div class="runner-progress-text" id="progressText">
+                Question <span id="currentQuestionNum">1</span> of {{ questions|length }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="quiz-progress-track">
+        <div class="quiz-progress-fill" id="quizProgressFill" style="width: 20%;"></div>
+    </div>
+
+    <!-- Questions Wrapper -->
+    <form id="quizForm" onsubmit="return false;">
+        {% for q in questions %}
+        <div class="question-step-card {% if loop.first %}active{% endif %}" id="qStep_{{ loop.index }}" data-question-id="{{ q.id }}" style="{% if not loop.first %}display: none;{% endif %}">
+            <div class="question-number-badge">Question {{ loop.index }}</div>
+            <h2 class="question-prompt">{{ q.question_text }}</h2>
+
+            <div class="options-container">
+                <label class="option-label" for="q{{ q.id }}_A">
+                    <input type="radio" name="q_{{ q.id }}" id="q{{ q.id }}_A" value="A" class="option-radio" />
+                    <span class="option-letter">A</span>
+                    <span class="option-text">{{ q.option_a }}</span>
+                </label>
+
+                <label class="option-label" for="q{{ q.id }}_B">
+                    <input type="radio" name="q_{{ q.id }}" id="q{{ q.id }}_B" value="B" class="option-radio" />
+                    <span class="option-letter">B</span>
+                    <span class="option-text">{{ q.option_b }}</span>
+                </label>
+
+                <label class="option-label" for="q{{ q.id }}_C">
+                    <input type="radio" name="q_{{ q.id }}" id="q{{ q.id }}_C" value="C" class="option-radio" />
+                    <span class="option-letter">C</span>
+                    <span class="option-text">{{ q.option_c }}</span>
+                </label>
+
+                <label class="option-label" for="q{{ q.id }}_D">
+                    <input type="radio" name="q_{{ q.id }}" id="q{{ q.id }}_D" value="D" class="option-radio" />
+                    <span class="option-letter">D</span>
+                    <span class="option-text">{{ q.option_d }}</span>
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Navigation Buttons -->
+        <div class="quiz-runner-nav">
+            <button type="button" class="btn btn-outline" id="btnPrevQ" disabled>
+                &larr; Previous
+            </button>
+            <button type="button" class="btn btn-primary" id="btnNextQ">
+                Next &rarr;
+            </button>
+            <button type="button" class="btn btn-success" id="btnSubmitQuiz" style="display: none;">
+                Submit Quiz for Scoring
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const TOTAL_QUESTIONS = {{ questions|length }};
+    const QUIZ_ID = {{ quiz.id }};
+    const SUBMIT_URL = "{{ url_for('quiz.submit_quiz', quiz_id=quiz.id) }}";
+    const BASE_RESULT_URL = "{{ url_for('quiz.quiz_result', attempt_id=0) }}".replace("0", "");
+</script>
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endblock %}

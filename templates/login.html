@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Virtual AI Tutor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <!-- Auth Card -->
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-brand-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h1 class="auth-title">Virtual AI Tutor</h1>
+                <p class="auth-subtitle">Personalized Education Tailored to Users</p>
+            </div>
+
+            <!-- Flash Alerts -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.login') }}" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username or Email</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="Enter your username or email" required autofocus />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                    Sign In to Virtual Academy
+                </button>
+            </form>
+
+            <!-- Quick Demo Credentials Box -->
+            <div class="demo-creds-box">
+                <div class="demo-creds-title">Demo Accounts (Click to autofill):</div>
+                <div class="demo-chips-row">
+                    <button type="button" class="demo-chip" onclick="fillCreds('student', 'student123')">
+                        <strong>Student:</strong> student / student123
+                    </button>
+                    <button type="button" class="demo-chip" onclick="fillCreds('admin', 'admin123')">
+                        <strong>Admin:</strong> admin / admin123
+                    </button>
+                </div>
+            </div>
+
+            <div class="auth-footer">
+                <span>Don't have an account yet?</span>
+                <a href="{{ url_for('auth.register') }}" class="auth-link">Create Account</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fillCreds(u, p) {
+            document.getElementById('username').value = u;
+            document.getElementById('password').value = p;
+        }
+    </script>
+</body>
+</html>

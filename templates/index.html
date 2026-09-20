@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+
+</head>
+
+<body>
+
+<div class="main-container">
+
+    <div class="glass-card">
+
+        <h1>Virtual AI Tutor</h1>
+
+        <p class="subtitle">
+            Personalized Education Tailored to Users
+        </p>
+
+        <form method="POST">
+
+            <textarea
+                name="question"
+                placeholder="Ask your educational question here..."
+                required></textarea>
+
+            <button type="submit">
+                Ask AI Tutor
+            </button>
+
+        </form>
+
+        {% if answer %}
+
+        <div class="output-section">
+
+            <h2>AI Tutor Response</h2>
+
+            <textarea rows="10" readonly>
+{{ answer }}
+            </textarea>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+</body>
+</html>
